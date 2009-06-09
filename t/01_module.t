@@ -74,6 +74,14 @@ __DATA__
 --- data eval
 URI->new('http://example.com/?a=1&b=2')
 --- expected
+http://example.com/?a=1&b=2
+
+=== [% uri.as_string %]
+--- template
+[% data.as_string %]
+--- data eval
+URI->new('http://example.com/?a=1&b=2')
+--- expected
 http://example.com/?a=1&amp;b=2
 
 === [% uri | html %]

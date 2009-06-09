@@ -4,7 +4,7 @@ use warnings;
 
 use overload '""' => \&as_string;
 use overload "."  => \&concat;
-use overload "nomethod" => \&nomethod;
+use overload "fallback" => 1;
 
 sub new {
     my ( $klass, $str ) = @_;
@@ -33,13 +33,5 @@ sub concat {
     }
 }
 
-sub nomethod {
-    my ($self, $other, $reversed, $op) = @_;
-    if ($reversed) {
-        return eval "\$other $op \${\$self}"
-    } else {
-        return eval "\${\$self} $op \$other"
-    }
-}
 1;
 

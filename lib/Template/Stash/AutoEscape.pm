@@ -24,11 +24,12 @@ sub new {
     $self->{method_for_raw} ||= 'raw';
     $self->{escape_type} ||= 'HTML';
     $self->{_raw_string_class} ||= __PACKAGE__ . '::' . 'RawString';
+    $self->{ignore_escape} ||= [];
+
     my $escape_class = $class->class_for($self->{escape_type});
     if (!$escape_class->can("escape")) {
         $escape_class->require or die $@;
     }
-   
     $Template::Stash::SCALAR_OPS->{$self->{method_for_raw}} = sub {
         my $scalar = shift;
         $self->{_raw_string_class}->new($scalar);
@@ -36,25 +37,39 @@ sub new {
     return $self;
 }
 
+use Data::Dumper;
+
 sub get {
     my ( $self, @args ) = @_;
     my ($var) = $self->SUPER::get(@args);
+    warn Dumper \@args if $DEBUG;
+    if (ref $args[0] eq "ARRAY") {
+        my $key = $args[0]->[0];
+        warn $key if $DEBUG;
+        if (grep { $key eq $_ } @{ $self->{ignore_escape} }) {
+            warn "ignore escape $key" if $DEBUG;
+            return $var;
+        }
+    }
+
     my $ref = ref $var;
     # string
     unless ($ref) {
         $escape_count++ if $DEBUG;
         return $self->escape($var);
     }
-    # via .raw vmethod
+    # via .raw vmethod 
     if ($ref eq $self->{_raw_string_class}) {
         return "$var";
     }
-    my $escape_class = $self->class_for($self->{escape_type});
-    if (!$ref->isa($escape_class)) {
-        $escape_count++ if $DEBUG;
-        return $self->escape($var);
-    }
     return $var;
+#    my $escape_class = $self->class_for($self->{escape_type});
+#    warn $ref->isa($escape_class);
+#    if (!$ref->isa($escape_class)) {
+#        $escape_count++ if $DEBUG;
+#        return $self->escape($var);
+#    }
+#    return $var;
 }
 
 sub class_for {
@@ -110,8 +125,6 @@ default is raw
 
     Template::Stash::AutoEscape->class_for("HTML") # Template::Stash::AutoEscape::Escaped::HTML
     Template::Stash::AutoEscape->class_for("HTML" => "MyHTMLString");
-
-=back
 
 =head1 DESCRIPTION
 

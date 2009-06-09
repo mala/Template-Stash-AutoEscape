@@ -30,7 +30,9 @@ my $stash = Template::Stash::AutoEscape->new(
     escape_type    => "HTML",    # default => HTML
     method_for_raw => "raw",     # default => raw
 );
+
 use URI;
+use DateTime;
 my $tt = Template->new(
     {
         STASH   => $stash,
@@ -38,8 +40,12 @@ my $tt = Template->new(
     }
 );
 
+#warn $uri->host;
+
+
 my $data = {
     uri         => URI->new("http://example.com/?a=1&b=2"),
+    date        => DateTime->now,
     array       => [qw(<b> <a> </a>)],
     string      => "<b>hoge</b>",
     html_string => as_html("<b>hoge</b>"),
@@ -61,8 +67,18 @@ print $output;
 __DATA__
 <html>
 
+[% copy_html = html_string %]
+[% copy_html | html %]
+
 [% uri %]
 [% uri | html  %]
+[% uri.as_string %]
+[% uri.raw %]
+[% uri.host %]
+
+[% uri2 = uri %]
+[% uri2 %]
+[% uri2.host %]
 
 [% html_string %] => <b>hoge</b>
 [% html_string | html %] => <b>hoge</b>

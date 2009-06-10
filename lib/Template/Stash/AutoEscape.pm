@@ -12,7 +12,8 @@ use Template::Stash::AutoEscape::RawString;
 
 __PACKAGE__->mk_classdata('class_for_type');
 __PACKAGE__->class_for_type({
-    HTML => __PACKAGE__ . '::Escaped::HTML', 
+    HTML => __PACKAGE__ . '::Escaped::HTML',
+    YourCode => __PACKAGE__ . '::Escaped::YourCode',
 });
 
 our $DEBUG = 0;
@@ -22,14 +23,24 @@ sub new {
     my $class = shift;
     my $self = $class->SUPER::new(@_);
     $self->{method_for_raw} ||= 'raw';
-    $self->{escape_type} ||= 'HTML';
     $self->{_raw_string_class} ||= __PACKAGE__ . '::' . 'RawString';
     $self->{ignore_escape} ||= [];
 
-    my $escape_class = $class->class_for($self->{escape_type});
-    if (!$escape_class->can("escape")) {
-        $escape_class->require or die $@;
+    if (ref $self->{escape_method} eq "CODE") {
+        $self->{escape_type} = "YourCode";
+        my $escape_class = $class->class_for($self->{escape_type});
+        if (!$escape_class->can("escape")) {
+            $escape_class->require or die $@;
+        }
+        $escape_class->escape_method($self->{escape_method});
+    } else {
+        $self->{escape_type} ||= 'HTML';
+        my $escape_class = $class->class_for($self->{escape_type});
+        if (!$escape_class->can("escape")) {
+            $escape_class->require or die $@;
+        }
     }
+    
     $Template::Stash::SCALAR_OPS->{$self->{method_for_raw}} = sub {
         my $scalar = shift;
         $self->{_raw_string_class}->new($scalar);

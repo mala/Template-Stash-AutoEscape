@@ -119,7 +119,11 @@ Template::Stash::AutoEscape - escape automatically in Template-Toolkit.
 
 =head1 SYNOPSIS
 
+  use Template;
   use Template::Stash::AutoEscape;
+  my $tt = Template->new({
+    STASH => Template::Stash::AutoEscape->new  
+  });
 
 =head1 METHODS
 
@@ -133,7 +137,16 @@ default is HTML
 
 =item method_for_raw
 
-default is raw
+default is raw, you can get not escaped value from [% value.raw %] 
+
+=item escape_method
+
+  my $tt = Template->new({
+    STASH => Template::Stash::AutoEscape->new({
+        escape_method => sub { my $text = shift; ... ; return $text }
+    })
+  });
+                
 
 =back
 
@@ -144,7 +157,7 @@ default is raw
 
 =head1 DESCRIPTION
 
-Template::Stash::AutoEscape is a sub class of L<Template::Stash>,
+Template::Stash::AutoEscape is a sub class of L<Template::Stash>, automatically escape all HTML strings and avoid XSS vulnerability.
 
 
 =head1 AUTHOR

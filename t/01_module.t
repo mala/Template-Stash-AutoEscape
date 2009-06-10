@@ -24,7 +24,7 @@ sub my_html_filter {
 }
 
 sub as_html {
-    Template::Stash::AutoEscape->class_for('HTML')->new( $_[0] );
+    Template::Stash::AutoEscape->class_for('HTML')->new_as_escaped( $_[0] );
 }
 
 my $stash = Template::Stash::AutoEscape->new(

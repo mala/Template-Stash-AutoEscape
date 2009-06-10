@@ -12,7 +12,8 @@ sub escape {
         s/>/&gt;/g;
         s/"/&quot;/g;
     }
-    return $class->new($text);
+    return $text;
+    # return $class->new($text, 1);
 }
 
 1;

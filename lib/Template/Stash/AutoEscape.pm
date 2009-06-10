@@ -34,6 +34,10 @@ sub new {
         my $scalar = shift;
         $self->{_raw_string_class}->new($scalar);
     };
+    $Template::Stash::LIST_OPS->{$self->{method_for_raw}} = sub {
+        my $scalar = shift;
+        $self->{_raw_string_class}->new($scalar);
+    };
     return $self;
 }
 
@@ -83,9 +87,10 @@ sub class_for {
 
 sub escape {
     my $self = shift;
-    my $text  = shift;
+    my $text = shift;
     my $class = $self->class_for($self->{escape_type});
-    $class->escape($text);
+    my $stringify_callback = $self->{before_stringify};
+    $class->new($text, 0, undef, $stringify_callback);
 }
 
 sub escape_count {

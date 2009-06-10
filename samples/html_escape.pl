@@ -26,10 +26,12 @@ sub my_html_filter {
     return $text;
 }
 
-my $stash = Template::Stash::AutoEscape->new(
+$Template::Stash::AutoEscape::DEBUG = 1;
+my $stash = Template::Stash::AutoEscape->new({
     escape_type    => "HTML",    # default => HTML
     method_for_raw => "raw",     # default => raw
-);
+    ignore_escape => ["bold_allow_tag"],
+});
 
 use URI;
 use DateTime;
@@ -46,6 +48,7 @@ my $tt = Template->new(
 my $data = {
     uri         => URI->new("http://example.com/?a=1&b=2"),
     date        => DateTime->now,
+    text        => as_html("hogehoge<b>text</b>"),
     array       => [qw(<b> <a> </a>)],
     string      => "<b>hoge</b>",
     html_string => as_html("<b>hoge</b>"),
@@ -67,16 +70,23 @@ print $output;
 __DATA__
 <html>
 
+[% MACRO bold(text) BLOCK %]<b>aaa</b>[% END %]
+[% MACRO bold_allow_tag(text) BLOCK %]<b>aaa</b>[% END %]
+
+[% bold(text) %]
+[% bold_allow_tag(text) %]
+
 [% copy_html = html_string %]
 [% copy_html | html %]
 
-[% uri %]
-[% uri | html  %]
-[% uri.as_string %]
-[% uri.raw %]
-[% uri.host %]
+[% uri %] => http://example.com/?a=1&b=2
+[% uri | html  %] => http://example.com/?a=1&amp;b=2
+[% uri.as_string %] => http://example.com/?a=1&amp;b=2
+[% uri.raw %] => http://example.com/?a=1&b=2
+[% uri.host %] => example.com
 
 [% uri2 = uri %]
+[% uri == uri2 %]
 [% uri2 %]
 [% uri2.host %]
 

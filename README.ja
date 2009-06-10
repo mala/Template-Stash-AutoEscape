@@ -1,3 +1,60 @@
-TTで自動エスケープを可能にするモジュールです。
+TTで自動エスケープを可能にするモジュールです
 
+* 基本的な使い方
 
+my $tt = Template->new({
+    STASH => Template::Stash::AutoEscape->new
+});
+
+* エスケープ方法を自分で定義する
+
+my $tt = Template->new({
+    STASH => Template::Stash::AutoEscape->new({
+        escape_method => sub { my $text = shift; ... ; return $text }
+    })
+});
+
+* 二重エスケープの防止
+
+TTのhtmlフィルタを上書きしてください。Escapedなオブジェクトがhtmlフィルタに渡された場合はそのまま返すようにします。
+
+my $stash = Template::Stash::AutoEscape->new;
+my $html_class = $stash->class_for("HTML");
+sub my_html_filter {
+    my $text = shift;
+    return $text if (ref $text eq $html_class);
+    for ($text) {
+        s/&/&amp;/g;
+        s/</&lt;/g;
+        s/>/&gt;/g;
+        s/"/&quot;/g;
+    }
+    return $text;
+}
+
+my $tt = Template->new({
+    STASH => $stash,
+    FILTERS => {
+        html => \&my_html_filter,
+    },
+});
+
+* エスケープされていない値を取得する
+
+TTのVMethodが定義されています。.rawで「未エスケープの文字列」が取得できます。
+
+[% value.raw %]
+
+条件判断文で元の値が必要な場合などに使います。
+
+* 制限事項
+
+** 文字列化するオブジェクトをそのままテンプレートに渡している場合
+- 自動エスケープするのは文字列のみです。オブジェクトには変更を加えません。
+- $url = URI->new("http://example.com/1&2") は http://example.com/1&amp;2 になるべきだと思いますが、そうなりません。
+- [% url.as_string %] の場合は http://example.com/1&amp;2 になります。
+- DBからURIを引いた際に自動で変換するようにしてる場合に困ると思います。
+
+** エスケープ済みオブジェクトの型
+- ref $escaped_html eq "ARRAY" になります。
+- TTのINCLUDEモジュールはファイル名、テンプレート文字列、ファイルハンドルを受け取れますが、それぞれSCALAR, SCALAR ref, GLOBを期待しているためエラーになります。

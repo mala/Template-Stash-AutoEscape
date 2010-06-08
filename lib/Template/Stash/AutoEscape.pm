@@ -7,6 +7,7 @@ our $VERSION = '0.01';
 use Template::Config;
 use base ($Template::Config::STASH, 'Class::Data::Inheritable');
 
+use Data::Dumper;
 use UNIVERSAL::require;
 use Template::Stash::AutoEscape::RawString;
 
@@ -18,6 +19,8 @@ __PACKAGE__->class_for_type({
 
 our $DEBUG = 0;
 our $escape_count = 0;
+
+our $ESCAPE_ARGS = 0;
 
 sub new {
     my $class = shift;
@@ -52,12 +55,50 @@ sub new {
     return $self;
 }
 
-use Data::Dumper;
+sub get_raw_args {
+    my ( $args, $escaped_class ) = @_;
+    my $changed = 0;
+    my @raw_args;
+    for my $v (@{ $args }) {
+        my $new_v;
+        if ( ref $v eq $escaped_class ) {
+            $changed = 1;
+            $new_v = $v->[0];
+        } elsif (ref $v eq 'ARRAY') {
+            $new_v = get_raw_args($v, $escaped_class);
+            if ($new_v) {
+                $changed = 1;
+            } else {
+                $new_v = $v;
+            }
+        } else {
+            $new_v = $v;
+        }
+        push @raw_args, $new_v;
+    }
+
+    return unless $changed;
+    return \@raw_args;
+}
 
 sub get {
     my ( $self, @args ) = @_;
+    # get value
+    warn Dumper +{ args => \@args } if $DEBUG;
+
+    # note: hack for [% hash.${key} %] [% hash.item(key) %] 
+    # key expected raw string.
+    if (!$ESCAPE_ARGS && ref $args[0] eq "ARRAY" && (scalar @{$args[0]} > 2)){
+        my $escaped_class = $self->class_for($self->{escape_type});
+        my $changed = get_raw_args($args[0], $escaped_class);
+        # retry by non-escaped args
+        if ($changed) {
+            $args[0] = $changed;
+            return $self->get(@args);
+        }
+    }
+
     my ($var) = $self->SUPER::get(@args);
-    warn Dumper \@args if $DEBUG;
     if (ref $args[0] eq "ARRAY") {
         my $key = $args[0]->[0];
         warn $key if $DEBUG;
@@ -159,6 +200,14 @@ default is raw, you can get not escaped value from [% value.raw %]
 
 Template::Stash::AutoEscape is a sub class of L<Template::Stash>, automatically escape all HTML strings and avoid XSS vulnerability.
 
+=head1 CONFIGURE
+
+=over 2
+
+=item $Template::Stash::AutoEscape::ESCAPE_ARGS
+
+ default is 0. for example "key of hash" or "args of vmethods" are not escaped. I think this is good in most cases.
+ [% hash.${key} %] [% hash.item(key) %] means [% hash.${key.raw} | html %] [% hash.item(key.raw) | html %] by default.
 
 =head1 AUTHOR
 

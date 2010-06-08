@@ -11,6 +11,7 @@ sub escape {
         s/</&lt;/g;
         s/>/&gt;/g;
         s/"/&quot;/g;
+        s/'/&#39;/g;
     }
     return $text;
     # return $class->new($text, 1);

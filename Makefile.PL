@@ -5,7 +5,11 @@ all_from 'lib/Template/Stash/AutoEscape.pm';
 # requires '';
 
 tests 't/*.t';
-author_tests 'xt';
+# author_tests 'xt';
+
+requires 'Class::Data::Inheritable';
+requires 'UNIVERSAL::require';
+requires 'Template::Toolkit';
 
 build_requires 'Test::More';
 use_test_base;

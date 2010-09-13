@@ -6,3 +6,7 @@ Revision history for Perl extension Template::Stash::AutoEscape
 0.02    Tue Jun 08 18:28:37 2010
         - fix requires
         - now [% hash.item(key) %] works as [% hash.item(key.raw) %] by default.
+
+0.03    Mon Sep 13 19:24:16 2010
+        - fix bug with [% 0 %]
+        - update pod

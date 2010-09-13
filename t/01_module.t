@@ -181,3 +181,10 @@ already escaped: &lt;b&gt;hoge&lt;/b&gt;
 --- expected
 <b>method</b>
 
+=== [% string %][% 0 %]
+--- template
+[% data %][% 0 %]
+--- data
+<b>hoge</b>
+--- expected
+&lt;b&gt;hoge&lt;/b&gt;0

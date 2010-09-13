@@ -76,14 +76,14 @@ sub as_string {
 sub concat {
     my ( $self, $other, $reversed ) = @_;
     my $class = ref $self;
-    if ($other && ref $other eq $class) {
+    if (defined $other && length $other && ref $other eq $class) {
         # warn "concat with EscapedHTML";
         my $newval = ($reversed) ? $other->as_string . $self->as_string : $self->as_string . $other->as_string;
         return bless [
             $newval, $self->[FLAG], $newval, $self->[CALLBACK]
         ], $class;
     }
-    elsif ($other) {
+    elsif (defined $other && length $other) {
         my $newval = ($reversed) ? $other . $self->as_string : $self->as_string . $other;
         return bless [
             $newval, $self->[FLAG], $newval, $self->[CALLBACK]

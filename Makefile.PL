@@ -9,7 +9,7 @@ tests 't/*.t';
 
 requires 'Class::Data::Inheritable';
 requires 'UNIVERSAL::require';
-requires 'Template::Toolkit';
+requires 'Template';
 
 build_requires 'Test::More';
 use_test_base;

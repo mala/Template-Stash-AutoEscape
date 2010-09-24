@@ -26,8 +26,10 @@ sub new {
     my $class = shift;
     my $self = $class->SUPER::new(@_);
     $self->{method_for_raw} ||= 'raw';
+    $self->{method_for_escape} ||= 'escape';
     $self->{_raw_string_class} ||= __PACKAGE__ . '::' . 'RawString';
     $self->{ignore_escape} ||= [];
+    $self->{die_on_unescaped} ||= 0;
 
     if (ref $self->{escape_method} eq "CODE") {
         $self->{escape_type} = "YourCode";
@@ -44,13 +46,20 @@ sub new {
         }
     }
     
-    $Template::Stash::SCALAR_OPS->{$self->{method_for_raw}} = sub {
-        my $scalar = shift;
-        $self->{_raw_string_class}->new($scalar);
-    };
-    $Template::Stash::LIST_OPS->{$self->{method_for_raw}} = sub {
-        my $scalar = shift;
-        $self->{_raw_string_class}->new($scalar);
+    foreach my $ops ($Template::Stash::SCALAR_OPS, $Template::Stash::LIST_OPS)
+    {
+        $ops->{$self->{method_for_raw}} = sub {
+            my $scalar = shift;
+            return $self->{_raw_string_class}->new($scalar);
+        };
+
+        $ops->{$self->{method_for_escape}} = sub {
+            my $scalar = shift;
+            return $self->{_raw_string_class}->new(
+                $self->escape($scalar),
+            );
+        };
+
     };
     return $self;
 }
@@ -111,8 +120,15 @@ sub get {
     my $ref = ref $var;
     # string
     unless ($ref) {
-        $escape_count++ if $DEBUG;
-        return $self->escape($var);
+        if ($self->{die_on_unescaped}) {
+            die Template::Excpetion->new(
+                $args[0], "Unescaped and not marked as raw"
+            );
+        }
+        else {
+            $escape_count++ if $DEBUG;
+            return $self->escape($var);
+        }
     }
     # via .raw vmethod 
     if ($ref eq $self->{_raw_string_class}) {
@@ -172,9 +188,20 @@ Template::Stash::AutoEscape - escape automatically in Template-Toolkit.
 
 =over 2
 
+=item die_on_unescaped
+
+This value, if set to a true value, causes the process to throw an exception
+upon encountering a value that was not explicitly set to be escaped or was
+marked as a raw value.
+
 =item escape_type
 
 default is HTML
+
+=item method_for_escape
+
+The default method to escape a value explicitly (mostly useful with 
+C<die_on_unescaped> .
 
 =item method_for_raw
 
